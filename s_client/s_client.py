@@ -27,7 +27,9 @@ SESSION_FIELDS = ['Protocol',
 
 SESSION_TICKET = 'TLS session ticket'
 
-OTHER_FIELDS = ['Peer signing digest', 'Server Temp Key']
+OTHER_FIELDS = ['Peer signing digest', 'Server Temp Key',
+                'Client Certificate Types', 'Requested Signature Algorithms', 'Shared Requested Signature Algorithms',
+                'Peer signing digest', 'Peer signature type', 'Server Temp Key']
 
 
 class OpenSSLSClientParser(object):
@@ -59,10 +61,14 @@ class OpenSSLSClientParser(object):
         in_certificate = False
         in_ssl_session = False
         in_ssl_session_ticket = False
+        in_ca_names = False
 
         certificate = {}
         chain_number = 0
         certificate_string = ""
+
+        ca_names = []
+
         lineno = 0
 
         session_ticket = []
@@ -126,6 +132,14 @@ class OpenSSLSClientParser(object):
                     if keyword in line:
                         conn_info[keyword] = self._extract_after_colon(line)
 
+            elif in_ca_names:
+                if 'Client Certificate Types' in line:
+                    in_ca_names = False
+                    conn_info['Acceptable client certificate CA names'] = ca_names
+                    continue
+                else:
+                    ca_names.append(line)
+
             else:
                 for keyword in OTHER_FIELDS:
                     if keyword in line:
@@ -138,6 +152,8 @@ class OpenSSLSClientParser(object):
                 # we're going to want to re
             elif line == 'SSL-Session:':
                 in_ssl_session = True
+            elif line == 'Acceptable client certificate CA names':
+                in_ca_names = True
 
         self.conn_info = conn_info
 
