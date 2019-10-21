@@ -133,7 +133,7 @@ class OpenSSLSClientParser(object):
                         conn_info[keyword] = self._extract_after_colon(line)
 
             elif in_ca_names:
-                if 'Client Certificate Types' in line:
+                if 'Client Certificate Types' in line or 'Requested Signature Algorithm' in line:
                     in_ca_names = False
                     conn_info['Acceptable client certificate CA names'] = ca_names
                     continue
